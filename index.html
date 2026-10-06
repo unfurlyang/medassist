@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>医询 MedAssist · 症状分析与用药信息参考</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="logo">🩺</span>
+      <div class="brand-text"><strong>医询 MedAssist</strong><span>症状分析 · 用药信息参考 · 智能健康助手</span></div>
+    </div>
+    <nav class="tabs" id="mainTabs">
+      <button class="tab active" data-tab="analyze">🔎 分析台</button>
+      <button class="tab" data-tab="drugs">💊 用药参考</button>
+      <button class="tab" data-tab="kg">🕸️ 知识图谱</button>
+      <button class="tab" data-tab="about">📋 关于与声明</button>
+    </nav>
+  </div>
+</header>
+
+<div class="disclaimer-bar">
+  ⚠️ 本工具<strong>不构成医疗建议</strong>，不能替代医生诊断与处方。用药前请咨询医生或药师。如有紧急症状请立即拨打 120。
+</div>
+
+<main>
+
+  <!-- ============ 分析台 ============ -->
+  <section class="tab-page" id="tab-analyze">
+    <div class="cols">
+      <div class="card">
+        <div class="card-head"><h2>1 · 描述你的情况</h2></div>
+        <p class="hint">点击常见症状，再用一段话补充细节（哪里不舒服、多久了、什么感觉）。</p>
+        <div class="chips" id="quickChips"></div>
+        <textarea id="inputText" rows="5" placeholder="例如：昨天开始嗓子疼、鼻塞流清鼻涕，今天有点低烧，浑身没劲……"></textarea>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btnAnalyze">开始分析</button>
+          <button class="btn btn-ghost" id="btnClear">清空</button>
+          <span class="muted small" id="llmBadge">当前模式：本地知识库（离线）</span>
+        </div>
+        <div class="redflag-banner" id="redflagBanner" hidden></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>2 · 分析结果</h2><span class="muted small" id="resultMeta"></span></div>
+        <div id="resultArea" class="result-area">
+          <div class="placeholder">结果将显示在这里：可能病因方向（相关度排序）→ 常用药物信息卡 → 非药物建议 → 就医信号。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>知识图谱 · 症状—疾病—药物—科室</h2><span class="muted small">展示关联度最高的一项</span></div>
+      <canvas id="kgCanvas" class="kg-canvas"></canvas>
+    </div>
+  </section>
+
+  <!-- ============ 用药参考 ============ -->
+  <section class="tab-page" id="tab-drugs" hidden>
+    <div class="card">
+      <div class="card-head"><h2>OTC / 常用药物信息卡</h2>
+        <input type="search" id="drugSearch" placeholder="搜索药名 / 类别 / 适应证…" class="search-input">
+      </div>
+      <p class="hint">以下为常见非处方药（OTC）的公开说明书要点整理，供了解与核对，<strong>不构成用药指导</strong>。处方药请务必遵医嘱。</p>
+      <div class="drug-grid" id="drugGrid"></div>
+      <div class="card-head" style="margin-top:22px"><h2>这些药是处方药 —— 只做科普，不做推荐</h2></div>
+      <div class="rx-grid" id="rxGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ 知识图谱 ============ -->
+  <section class="tab-page" id="tab-kg" hidden>
+    <div class="card">
+      <div class="card-head"><h2>本站知识库结构</h2><span class="muted small">架构参考 github.com/liuhuanyong/QASystemOnMedicalKG</span></div>
+      <div class="kg-stats" id="kgStats"></div>
+      <p class="hint">参考项目使用 Neo4j 存储约 4.4 万实体、30 万关系（疾病/症状/药物/检查/科室等 7 类）并做意图问答。本站为其轻量离线实现：以内置 JSON 知识库 + 加权匹配运行，另支持接入大模型 API 增强理解。</p>
+      <table class="data-table mini">
+        <thead><tr><th>实体类型</th><th>本站数量</th><th>说明</th></tr></thead>
+        <tbody id="kgTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ 关于与声明 ============ -->
+  <section class="tab-page" id="tab-about" hidden>
+    <div class="cols">
+      <div class="card">
+        <div class="card-head"><h2>✅ 正确用法</h2></div>
+        <ul class="tips">
+          <li>把这里当作<strong>就医前的信息整理器</strong>：梳理症状、学会描述、了解方向。</li>
+          <li>把结果带给医生，<strong>让专业判断更高效</strong>。</li>
+          <li>了解常见 OTC 药物的适应证与安全边界。</li>
+        </ul>
+        <div class="card-head" style="margin-top:18px"><h2>❌ 请勿这样用</h2></div>
+        <ul class="tips bad">
+          <li>把分析结果当诊断，自行"确诊"。</li>
+          <li>跳过医生直接照推荐买处方药。</li>
+          <li>给婴幼儿、孕产妇使用本工具做用药决策。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🔌 可选：AI 增强模式</h2></div>
+        <p class="hint">默认使用<strong>本地知识库</strong>（离线可用）。如需接入大模型做自然语言理解，可填入你自己的 API Key（OpenAI 兼容接口格式），Key 仅保存在本机浏览器。</p>
+        <div class="form-grid cols2">
+          <label class="field"><span>接口地址</span><input type="text" id="llmBase" placeholder="https://open.bigmodel.cn/api/paas/v4/chat/completions"></label>
+          <label class="field"><span>模型名</span><input type="text" id="llmModel" placeholder="glm-4-flash"></label>
+          <label class="field span-all"><span>API Key（仅存本地）</span><input type="password" id="llmKey" placeholder="sk-…（可选）"></label>
+          <label class="field span-all" style="flex-direction:row;align-items:center;gap:8px">
+            <input type="checkbox" id="llmEnable" style="width:auto">
+            <span>启用 AI 增强模式（关闭时始终使用本地知识库）</span>
+          </label>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" id="btnSaveLLM">保存设置</button>
+        <span class="muted small" id="llmState"></span></div>
+        <p class="muted small" style="margin-top:10px">未配置时自动回退本地模式；启用后分析请求将发送至你填写的第三方接口，请注意隐私。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🚨 必须立即就医的信号</h2></div>
+        <ul class="redflag-list" id="redflagList"></ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📚 资料与致谢</h2></div>
+        <ul class="tips">
+          <li>架构参考：<span class="mono">github.com/liuhuanyong/QASystemOnMedicalKG</span>（医疗知识图谱问答，约 4.4 万实体 / 30 万关系）</li>
+          <li>药品信息口径：中国非处方药说明书公开要点整理</li>
+          <li>安全设计：红旗急症优先拦截 · OTC 边界标注 · 处方药仅科普</li>
+        </ul>
+        <p class="muted small">本页面代码与知识库均为公开资料整理，使用前请自行核对信息并遵循专业医疗意见。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>医询 MedAssist · 本工具不构成医疗建议 · 紧急情况请拨打 120</p>
+</footer>
+
+<div id="toastWrap"></div>
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/kg.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
